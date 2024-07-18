@@ -18,6 +18,7 @@ namespace college.forms
     {
         private DbContext _dbContext;
         private string _Name;
+        private int _StudentID;
 
         public StudentForm(DbContext dbContext)
         {
@@ -28,55 +29,60 @@ namespace college.forms
         private void buttonInsert_Click(object sender, EventArgs e)
         {
             string Course = textBoxCourse.Text;
-            string Name = textBoxName.Text;
-            int StudentID = FindStudentByName(Name);
             int CourseID = FindCoursByName(Course);
-            bool Succeeded = InsertCourse(StudentID, CourseID);
+            bool Succeeded = InsertCourse(_StudentID, CourseID);
+
             if (Succeeded)
             {
-                MessageBox.Show($"Dear {Name}, you have registered is Succeeded!");
+                MessageBox.Show($"Dear {_Name}, you have registered is Succeeded!");
             }
             else
             {
                 MessageBox.Show("Try agin");
             }
-            int Balnce = balancePayable(StudentID);
+            int Balnce = balancePayable(_StudentID);
             labelCurrentBalance.Text = Balnce.ToString();
+
+
+
+
+
         }
 
 
         private void buttonPay_Click(object sender, EventArgs e)
         {
             int Amunet = Int32.Parse(textBoxAmunet.Text);
-            string Name = textBoxName.Text;
-            int StudentID = FindStudentByName(Name);
-            bool Succeeded = InsertPay(StudentID, Amunet);
+            bool Succeeded = InsertPay(_StudentID, Amunet);
             if (Succeeded)
             {
-                MessageBox.Show($"Dear {Name}, Your payment of NIS {textBoxAmunet.Text} has been successfully received!");
+                MessageBox.Show($"Dear {_Name}, Your payment of NIS {textBoxAmunet.Text} has been successfully received!");
             }
             else
             {
                 MessageBox.Show("Try another name");
             }
 
-            int Balnce = balancePayable(StudentID);
+            int Balnce = balancePayable(_StudentID);
             labelCurrentBalance.Text = Balnce.ToString();
         }
 
 
         private void buttonLogin_Click(object sender, EventArgs e)
         {
-            string Name = textBoxName.Text;
-            bool Succeeded = InsertStudent(Name);
+            _Name = textBoxName.Text;
+            bool Succeeded = InsertStudent(_Name);
             if (Succeeded)
             {
-                MessageBox.Show($"Dear {Name}, you have registered as a new student in the system!");
+                MessageBox.Show($"Dear {_Name}, you have registered as a new student in the system!");
             }
             else
             {
-                MessageBox.Show("Try another name");
+                MessageBox.Show($"Hi {_Name}, welcome, happy to see you again");
             }
+            _StudentID = FindStudentByName(_Name);
+            int Balnce = balancePayable(_StudentID);
+            labelCurrentBalance.Text = Balnce.ToString();
         }
 
         public int FindStudentByName (string Name) 
@@ -91,8 +97,12 @@ namespace college.forms
         {
             string query = "select ID from Courses where Name = @CourseName";
             SqlParameter[] parameters = { new SqlParameter("@CourseName", Name) };
-            int Result = (int)_dbContext.ExecuteScalar(query, parameters);
-            return Result;
+            object Result = _dbContext.ExecuteScalar(query, parameters);
+            if (Result == null)
+            {
+                return -1;
+            }
+            return (int)Result;
         }
         public bool InsertCourse(int StudentID, int CourseID)
         {
@@ -122,17 +132,29 @@ namespace college.forms
         }
         public int TheAmountOfMoneyAlreadyPaid(int StudentID) 
         {
-            string query = "select sum(Payments.amount) as 'already paid' from Payments join Students on Students.ID = Payments.StudentID where Students.ID = @StudentID";
+            string query = "select sum(Payments.amount) as 'already paid' from Payments join Students on Students.ID = Payments.StudentID where Students.ID = 1";
             SqlParameter[] parameters = { new SqlParameter("@StudentID", StudentID) };
-            int Result = (int)_dbContext.ExecuteScalar(query, parameters);
-            return Result;
+            MessageBox.Show(StudentID.ToString());
+
+            object Result = _dbContext.ExecuteScalar(query, parameters);
+
+            if (Result == null)
+            {
+                return -1;
+            }
+            return (int)Result;
         }
         public int TheAmountOfDebts(int StudentID)
         {
+            MessageBox.Show(StudentID.ToString() + "StudentID");
             string query = "select sum(Courses.price) as 'should pay' from Students join Registrations on Students.ID = Registrations.StudentID join Courses on Courses.ID = Registrations.CourseID where @StudentID = Students.ID";
             SqlParameter[] parameters = { new SqlParameter("@StudentID", StudentID) };
-            int Result = (int)_dbContext.ExecuteScalar(query, parameters);
-            return Result;
+            object Result = _dbContext.ExecuteScalar(query, parameters);
+            if (Result == null)
+            {
+                return -1;
+            }
+            return (int)Result;
         }
 
         public int balancePayable(int StudentID)
@@ -141,5 +163,16 @@ namespace college.forms
             int expenses = TheAmountOfDebts(StudentID);
             return expenses - Income;
         }
+
+        public bool Update(int sum, int StudentId)
+        {
+            string query = "UPDATE Students SET TotalDebt = @Sum  where id = @StudentId ";
+            SqlParameter[] parameters = { new SqlParameter("@StudentId", @StudentId),
+                                          new SqlParameter("@Sum", sum)};
+            int rowsAffected = _dbContext.ExecuteNonQuery(query, parameters);
+            return rowsAffected > 0;
+        }
+
+
     }
 }
