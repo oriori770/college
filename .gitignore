@@ -361,3 +361,5 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
+/college/SQL/Queries.sql
+/college/SQL/SchemaForCollege.sql
