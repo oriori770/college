@@ -44,9 +44,6 @@ namespace college.forms
             labelCurrentBalance.Text = Balnce.ToString();
 
 
-
-
-
         }
 
 
@@ -132,9 +129,8 @@ namespace college.forms
         }
         public int TheAmountOfMoneyAlreadyPaid(int StudentID) 
         {
-            string query = "select sum(Payments.amount) as 'already paid' from Payments join Students on Students.ID = Payments.StudentID where Students.ID = 1";
+            string query = "select sum(Payments.amount) as 'already paid' from Payments join Students on Students.ID = Payments.StudentID where Students.ID = @StudentID";
             SqlParameter[] parameters = { new SqlParameter("@StudentID", StudentID) };
-            MessageBox.Show(StudentID.ToString());
 
             object Result = _dbContext.ExecuteScalar(query, parameters);
 
@@ -146,7 +142,7 @@ namespace college.forms
         }
         public int TheAmountOfDebts(int StudentID)
         {
-            MessageBox.Show(StudentID.ToString() + "StudentID");
+
             string query = "select sum(Courses.price) as 'should pay' from Students join Registrations on Students.ID = Registrations.StudentID join Courses on Courses.ID = Registrations.CourseID where @StudentID = Students.ID";
             SqlParameter[] parameters = { new SqlParameter("@StudentID", StudentID) };
             object Result = _dbContext.ExecuteScalar(query, parameters);
@@ -160,7 +156,11 @@ namespace college.forms
         public int balancePayable(int StudentID)
         {
             int Income = TheAmountOfMoneyAlreadyPaid(StudentID);
+            MessageBox.Show(Income.ToString() + "Income");
             int expenses = TheAmountOfDebts(StudentID);
+            MessageBox.Show(expenses.ToString() + "expenses");
+
+
             return expenses - Income;
         }
 
